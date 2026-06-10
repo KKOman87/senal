@@ -1,0 +1,8 @@
+# auditoría local — nunca al repo público
+SECURITY_AUDIT.md
+
+# entornos y credenciales, por si algún día aparecen aquí
+.env
+.env.*
+*.pem
+*.key
