@@ -32,6 +32,7 @@ Requiere abrir chromium con <code>--allow-file-access-from-files</code>.</p>
     ['canal6.html', 3, 40, '', 'c6 bloqueado (3:40)'],
     ['canal7.html', 12, 0, '?v=123456', 'c7 al aire (las seis abiertas)'],
     ['canal7.html', 12, 0, '?v=125', 'c7 bloqueado (faltan)'],
+    ['index.html', 14, 0, '', 'guía: restaurar por código', 'restore'],
     ['test.html', 12, 0, '', 'pruebas de reglas']
   ];
 
@@ -91,6 +92,18 @@ Requiere abrir chromium con <code>--allow-file-access-from-files</code>.</p>
         try {
           var btn = frame.contentDocument.getElementById('powerBtn');
           if (btn) btn.click();
+          if (sc[5] === 'restore'){
+            var doc = frame.contentDocument, w = frame.contentWindow;
+            var code = w.SENAL.codeFor(w.SENAL.parseVisited('1234'));
+            doc.getElementById('codeRestore').click();
+            doc.getElementById('codeIn').value = code;
+            doc.getElementById('codeGo').click();
+            var got = w.SENAL.visitedToString(w.SENAL.state.v);
+            if (got.indexOf('1234') < 0) errors.push(sc[4] + ': restauró "' + got + '", esperaba incluir 1234');
+            // y un código basura debe ser rechazado sin romper
+            doc.getElementById('codeIn').value = 'SEÑAL-XXX';
+            doc.getElementById('codeGo').click();
+          }
         } catch(e){ errors.push(sc[4] + ': driver ' + e.message); }
         setTimeout(function(){
           var ok = errors.length === 0;

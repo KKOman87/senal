@@ -70,3 +70,36 @@ entre las tres y las tres y media"*.
   `history.replaceState` (en `file://` algunos lo bloquean; los enlaces bastan).
 - Atajo de tramposos: editar la URL a `?v=123456` abre el 7 directamente.
   Es un ARG estático sin servidor; se asume que leer el fuente es parte del juego.
+
+---
+
+## Añadidos v2 (2026-06-09) — código de transmisión + capas escondidas
+
+### Código de transmisión (resume sin localStorage)
+- En el índice, "Tu frecuencia: **SEÑAL-XXX**" codifica qué canales (1–6)
+  abriste, en 11 bits (6 de máscara + 5 de control) sobre base32 Crockford.
+  `SENAL.codeFor(set)` / `SENAL.decodeCode(str)` / `SENAL.applyCode(str)`.
+- Botón **copiar** (clipboard con fallback) y **restaurar** (input que funde el
+  código en el estado). Sirve para volver a tu 03:33 local con los otros 5
+  canales ya abiertos. NO salta la reja horaria: el canal 6 sigue exigiendo
+  03:00–03:33 reales; el código solo conserva lo demás.
+- El reloj siempre fue hora local del dispositivo (`new Date()`); el canal 6
+  bloqueado ahora lo dice explícito y muestra la zona (`Intl…timeZone`).
+
+### Capas escondidas / easter eggs (ARG secundario, no rompen el puzzle de 7 palabras)
+1. **Consola (F12):** `SENAL.consoleSig()` imprime una nota firmada con la zona
+   horaria del visitante y pistas sutiles ("mira los cuadros que parpadean").
+2. **Comentario en el código fuente** del index: apunta a /humans.txt, la
+   consola y el DNS, y recuerda que las palabras viven en los canales.
+3. **/humans.txt:** lore en voz de la transmisión, con la frase final embebida.
+4. **/robots.txt:** flavor + puntero a DNS y consola; `Disallow: /404.html`.
+5. **/sitemap.txt:** lista los canales 1–5 y 7 — **omite el canal 6 a propósito**
+   (el hueco entre 5 y 7 es la pista de que existe algo no listado).
+6. **og.png:** chunks de texto PNG (Title/Author/Comment/Software) con un
+   mensaje — visible con `strings og.png` o exiftool. Incluye la ventana
+   03:00–03:33 y el puntero al DNS.
+7. **DNS TXT** (si se crea, requiere aprobación): `senal.obsidiandistrict.com`
+   y `_senal.obsidiandistrict.com` con versos/pistas. `dig TXT senal.obsidiandistrict.com`.
+
+Ninguna capa nueva revela las 7 palabras ni su orden: son profundidad para el
+que escarba, no atajos al final.

@@ -122,6 +122,31 @@
   check('parseVisited ignora basura', S.visitedToString(S.parseVisited('9x08')), '');
   check('parseVisited dedup', S.visitedToString(S.parseVisited('111222')), '12');
 
+  /* ---- código de transmisión ---- */
+  (function(){
+    var ok=0, total=0;
+    for (var m=0; m<64; m++){
+      total++;
+      var s=new Set();
+      for (var c=1;c<=6;c++) if (m & (1<<(c-1))) s.add(c);
+      var dec=S.decodeCode(S.codeFor(s));
+      if (dec && S.visitedToString(dec)===S.visitedToString(s)) ok++;
+    }
+    check('código: round-trip de los 64 estados', ok, total);
+  })();
+  check('código: tolera minúsculas y espacios',
+    S.visitedToString(S.decodeCode(' señal- ' + S.codeFor(S.parseVisited('135')).split('-')[1].toLowerCase()) || new Set()), '135');
+  check('código basura no valida', S.decodeCode('XK9Q2'), null);
+  check('código vacío no valida', S.decodeCode(''), null);
+  check('código sin prefijo también vale',
+    S.visitedToString(S.decodeCode(S.codeFor(S.parseVisited('1246')).replace('SEÑAL-','')) || new Set()), '1246');
+  check('applyCode funde sin borrar lo previo (puro)',
+    (function(){
+      var saved=S.state.v; S.state.v=S.parseVisited('12');
+      S.applyCode(S.codeFor(S.parseVisited('45')));
+      var r=S.visitedToString(S.state.v); S.state.v=saved; return r;
+    })(), '1245');
+
   /* ---- frase final ---- */
   check('frase exacta', S.normalizePhrase('LA SEÑAL NO TERMINA CUANDO TE DUERMES') === S.PHRASE_KEY, true);
   check('frase en minúsculas y sin ñ', S.normalizePhrase('la senal no termina cuando te duermes') === S.PHRASE_KEY, true);

@@ -26,6 +26,20 @@
 <link rel="stylesheet" href="assets/senal.css">
 </head>
 <body>
+<!--
+   S E Ñ A L  ·  transmisión sin origen
+   ─────────────────────────────────────────────────────────────
+   Si llegaste hasta el código fuente, ya eres de los que se quedan.
+   Hay más de lo que se ve:
+     · /humans.txt        — quién emite, y desde cuándo
+     · la consola (F12)   — te dejamos una nota ahí
+     · dig TXT senal.obsidiandistrict.com   — la señal también viaja por DNS
+   Las siete palabras NO están aquí. Viven en los canales: en los cuadros
+   que parpadean, en las pausas de la escritura, en la nieve. Una por canal.
+   Tu frecuencia (el código SEÑAL-···) guarda lo que ya abriste. Anótala.
+   El reloj que manda es el de tu aparato. Por eso el canal 6 es posible
+   donde sea que estés, a tu propia 03:33.
+-->
   <div class="turnon" id="turnon"></div>
 
   <div class="power" id="power">
@@ -46,6 +60,20 @@
         <span id="clock">--:--:--</span>
       </span>
     </header>
+
+    <div class="freq" id="freq">
+      <span class="lbl">Tu frecuencia</span>
+      <span class="code" id="codeOut">SEÑAL-···</span>
+      <span class="spacer"></span>
+      <button class="btn dim" id="codeCopy">copiar</button>
+      <button class="btn dim" id="codeRestore">restaurar</button>
+    </div>
+    <div class="freqin" id="freqin" hidden>
+      <input id="codeIn" type="text" autocomplete="off" spellcheck="false"
+             aria-label="Pega tu código de transmisión" placeholder="SEÑAL-····">
+      <button class="btn" id="codeGo">Sintonizar</button>
+      <span class="note" id="codeNote">Pega el código que anotaste para recuperar tus canales.</span>
+    </div>
 
     <nav class="guide" id="guide" aria-label="Canales"></nav>
 
@@ -68,6 +96,7 @@
 (function(){
   var S = SENAL;
   S.readState();
+  S.consoleSig();
 
   var guide   = document.getElementById('guide');
   var franja  = document.getElementById('franja');
@@ -134,6 +163,46 @@
     S.setMuted(!S.state.m); paintMute(); paint(); lastKey='';
     paint();
   });
+
+  // ---- código de transmisión ----
+  var codeOut = document.getElementById('codeOut');
+  var freqin  = document.getElementById('freqin');
+  var codeIn  = document.getElementById('codeIn');
+  var codeNote= document.getElementById('codeNote');
+  function paintCode(){ codeOut.textContent = S.codeFor(S.state.v); }
+  paintCode();
+
+  document.getElementById('codeRestore').addEventListener('click', function(){
+    freqin.hidden = !freqin.hidden;
+    if (!freqin.hidden) codeIn.focus();
+  });
+  document.getElementById('codeCopy').addEventListener('click', function(){
+    var t = S.codeFor(S.state.v), btn = this;
+    function done(ok){ btn.textContent = ok ? 'copiado' : t; setTimeout(function(){ btn.textContent='copiar'; }, 1600); }
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(t).then(function(){done(true);}, function(){done(false);});
+      } else { done(false); }
+    } catch(e){ done(false); }
+  });
+  function restore(){
+    var before = S.visitedToString(S.state.v);
+    if (S.applyCode(codeIn.value)){
+      paintCode(); lastKey=''; paint();
+      var after = S.visitedToString(S.state.v);
+      codeNote.className = 'note';
+      codeNote.textContent = (after===before)
+        ? 'Frecuencia reconocida. No añadió canales nuevos.'
+        : 'Frecuencia restaurada. Canales recuperados: ' + after + '.';
+      codeIn.value = '';
+    } else {
+      codeNote.className = 'note bad';
+      codeNote.textContent = 'Ese código no es una frecuencia nuestra. Revísalo.';
+      S.glitch(tube);
+    }
+  }
+  document.getElementById('codeGo').addEventListener('click', restore);
+  codeIn.addEventListener('keydown', function(e){ if(e.key==='Enter') restore(); });
 
   paint();
   setInterval(function(){ lastKey=''; paint(); }, 5000);

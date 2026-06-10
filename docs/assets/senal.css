@@ -198,6 +198,27 @@ a.chan:hover,a.chan:focus-visible{border-color:var(--amber);background:rgba(201,
 }
 .phrase input:focus-visible{outline:none;border-color:var(--amber);box-shadow:0 0 0 2px rgba(201,146,60,.3)}
 
+/* ---------- código de transmisión (index) ---------- */
+.freq{
+  display:flex;gap:8px 12px;align-items:center;flex-wrap:wrap;position:relative;z-index:9;
+  border:1px solid rgba(110,79,28,.55);background:rgba(201,146,60,.04);
+  padding:8px 12px;margin-bottom:10px;font-size:clamp(12px,1.6vw,14px);letter-spacing:.1em;
+}
+.freq .lbl{color:var(--bone-dim);text-transform:uppercase;letter-spacing:.22em;font-size:.86em}
+.freq .code{color:var(--amber);letter-spacing:.26em;font-size:clamp(15px,2.2vw,19px)}
+.freq .spacer{flex:1}
+.freq button{font-size:11px;padding:4px 10px}
+.freqin{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:-2px 0 10px}
+.freqin[hidden]{display:none}
+.freqin input{
+  font-family:'VT323',monospace;background:rgba(0,0,0,.5);color:var(--bone);
+  border:1px solid var(--amber-deep);padding:8px 12px;letter-spacing:.2em;
+  font-size:clamp(14px,1.9vw,17px);text-transform:uppercase;min-width:0;flex:1;
+}
+.freqin input:focus-visible{outline:none;border-color:var(--amber);box-shadow:0 0 0 2px rgba(201,146,60,.3)}
+.freqin .note{width:100%;color:var(--bone-dim);font-size:11px;letter-spacing:.08em}
+.freqin .note.bad{color:var(--rec)}
+
 /* apagado final */
 .dieline{position:fixed;inset:0;z-index:40;background:#020203;display:none;align-items:center;justify-content:center}
 .dieline.go{display:flex}

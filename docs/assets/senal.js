@@ -53,6 +53,54 @@ var SENAL = (function () {
     return Array.from(set).sort().join('');
   }
 
+  /* ===================== código de transmisión =====================
+     El progreso (canales 1–6 vistos) cabe en 6 bits. Lo empaquetamos con
+     un dígito de control en un código corto tipo "SEÑAL-7K3" que el
+     visitante puede anotar y volver a pegar — así conserva lo abierto sin
+     localStorage y puede regresar a su 03:33 local para el canal 6. */
+  var CODE_ALPHA = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'; // Crockford base32
+
+  function maskOf(set) {
+    var m = 0;
+    for (var c = 1; c <= 6; c++) if (set.has(c)) m |= (1 << (c - 1));
+    return m;
+  }
+  function codeFor(set) {
+    var mask = maskOf(set);
+    var check = (mask * 5 + 9) & 0x1F;
+    var val = (check << 6) | mask;            // 11 bits
+    return 'SEÑAL-' +
+      CODE_ALPHA[(val >> 10) & 31] +
+      CODE_ALPHA[(val >> 5) & 31] +
+      CODE_ALPHA[val & 31];
+  }
+  // devuelve un Set de canales 1..6, o null si el código no valida
+  function decodeCode(str) {
+    var s = String(str || '').toUpperCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^A-Z0-9]/g, '')
+      .replace(/^SENAL/, '')
+      .replace(/O/g, '0').replace(/[IL]/g, '1'); // Crockford tolerante
+    var chars = s.split('').filter(function (c) { return CODE_ALPHA.indexOf(c) >= 0; });
+    if (chars.length < 3) return null;
+    chars = chars.slice(-3);
+    var val = 0;
+    for (var i = 0; i < 3; i++) val = (val << 5) | CODE_ALPHA.indexOf(chars[i]);
+    var mask = val & 0x3F, check = (val >> 6) & 0x1F;
+    if (((mask * 5 + 9) & 0x1F) !== check) return null;
+    var set = new Set();
+    for (var c = 1; c <= 6; c++) if (mask & (1 << (c - 1))) set.add(c);
+    return set;
+  }
+  // funde los canales de un código en el estado; true si validó
+  function applyCode(str) {
+    var set = decodeCode(str);
+    if (!set) return false;
+    set.forEach(function (c) { state.v.add(c); });
+    applyLinks(); syncUrl();
+    return true;
+  }
+
   // mayúsculas, sin tildes, solo letras (ñ→n para tolerar teclados)
   function normalizePhrase(s) {
     return String(s || '')
@@ -149,6 +197,27 @@ var SENAL = (function () {
   function horaTexto() {
     var d = new Date();
     return two(d.getHours()) + ':' + two(d.getMinutes());
+  }
+
+  // zona horaria del aparato del visitante (todo el desbloqueo usa hora local)
+  function tz() {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; }
+    catch (e) { return ''; }
+  }
+
+  // firma en la consola: capa escondida para el que abre las herramientas
+  var signed = false;
+  function consoleSig() {
+    if (signed || !W || !W.console) return;
+    signed = true;
+    var z = tz();
+    try {
+      console.log('%c S E Ñ A L ', 'background:#07070a;color:#c9923c;font-size:20px;letter-spacing:.4em;padding:6px 10px');
+      console.log('%cNo estabas buscando esto. Pero abriste la consola.', 'color:#d8d2c4;font-style:italic');
+      console.log('%cEl reloj que te juzga es el tuyo' + (z ? ' (' + z + ')' : '') + '. Por eso el canal 6 es posible donde estés.', 'color:#7e796d');
+      console.log('%cLas siete palabras viven en los canales, no aquí. Mira los cuadros que parpadean y las pausas.', 'color:#7e796d');
+      console.log('%c· · ·   /humans.txt   ·   dig TXT senal.obsidiandistrict.com   · · ·', 'color:#6e4f1c');
+    } catch (e) { /* consolas raras: sin drama */ }
   }
 
   /* ===================== efectos ===================== */
@@ -504,15 +573,25 @@ var SENAL = (function () {
     var now = new Date();
     var open = isUnlocked(cfg.ch, now, state.v);
 
+    consoleSig();
+
     if (!open) {
       // canal muerto: nada de encendido, estática y una pista
       if (els.power) els.power.classList.add('off');
       els.tube.classList.add('on');
       if (els.snow) snow(els.snow, { intensity: 0.45, fps: 16 });
+      // el 6 tranquiliza: la ventana es a TU hora local, vuelvas de donde vuelvas
+      var extra = '';
+      if (cfg.ch === 6) {
+        var z = tz();
+        extra = '<p class="pista" style="opacity:.6;font-size:.82em">' +
+          'la ventana corre por el reloj de tu aparato' + (z ? ' · ' + z : '') +
+          '. guarda tu frecuencia y vuelve a tu 03:00.</p>';
+      }
       els.tbody.innerHTML =
         '<div class="locked">' +
         '<div class="nosig">Sin señal</div>' +
-        '<p class="pista">' + (CH[cfg.ch].hint) + '</p>' +
+        '<p class="pista">' + (CH[cfg.ch].hint) + '</p>' + extra +
         '</div>';
       if (els.status) els.status.textContent = 'Canal ' + cfg.ch + ': fuera de emisión';
       if (cfg.onLocked) cfg.onLocked(els);
@@ -540,6 +619,11 @@ var SENAL = (function () {
     exists: exists,
     parseVisited: parseVisited,
     visitedToString: visitedToString,
+    codeFor: codeFor,
+    decodeCode: decodeCode,
+    applyCode: applyCode,
+    tz: tz,
+    consoleSig: consoleSig,
     normalizePhrase: normalizePhrase,
     PHRASE_KEY: PHRASE_KEY,
     CH: CH,

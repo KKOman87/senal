@@ -1,0 +1,11 @@
+# Si lees esto, ya estás más cerca que la mayoría.
+# Aquí no se esconde la respuesta — se esconde en los canales.
+# Las arañas pueden pasar. Tú quédate un rato.
+
+User-agent: *
+Allow: /
+Disallow: /404.html
+
+# La señal también viaja por DNS:  dig TXT senal.obsidiandistrict.com
+# Hay una nota para ti en la consola del navegador.
+Sitemap: https://senal.obsidiandistrict.com/sitemap.txt
