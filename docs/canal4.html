@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEÑAL — canal 04</title>
+<meta name="description" content="No hay nadie en el estudio. La carta se ajusta igual.">
+<meta name="theme-color" content="#07070a">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SEÑAL">
+<meta property="og:locale" content="es_ES">
+<meta property="og:title" content="SEÑAL — canal 04 · carta de ajuste">
+<meta property="og:description" content="No hay nadie en el estudio. La carta se ajusta igual.">
+<meta property="og:url" content="https://kkoman87.github.io/senal/canal4.html">
+<meta property="og:image" content="https://kkoman87.github.io/senal/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="SEÑAL — canal 04 · carta de ajuste">
+<meta name="twitter:description" content="No hay nadie en el estudio. La carta se ajusta igual.">
+<meta name="twitter:image" content="https://kkoman87.github.io/senal/assets/og.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/senal.css">
+<style>
+:root{--bleed:1.6px}
+#msg{font-size:clamp(16px,2.2vw,22px);max-width:none}
+.tbody{gap:12px;justify-content:flex-start;padding-top:14px}
+</style>
+</head>
+<body>
+  <div class="turnon" id="turnon"></div>
+
+  <div class="power" id="power">
+    <div class="hint">canal 04 · carta de ajuste</div>
+    <button id="powerBtn">▶ Sintonizar</button>
+    <div class="hint" style="font-size:12px;opacity:.6">pausa técnica · tono de referencia</div>
+  </div>
+
+  <main class="tube" id="tube" aria-live="polite">
+    <div class="grain"></div>
+    <canvas class="snow" id="snow" aria-hidden="true"></canvas>
+    <div class="track" id="track"></div>
+
+    <header class="head">
+      <span>Canal 04 · carta de ajuste</span>
+      <span class="right">
+        <span class="rec"><span class="dot"></span>AIRE</span>
+        <span id="clock">--:--:--</span>
+      </span>
+    </header>
+
+    <section class="tbody" id="tbody">
+      <div class="label" id="label">Patrón de prueba</div>
+      <p class="msg" id="msg"><span class="cursor"></span></p>
+      <div class="carta" aria-hidden="true">
+        <div class="franjas">
+          <i style="background:#d8d2c4"></i><i style="background:#c9923c"></i>
+          <i style="background:#8a6a2a"></i><i style="background:#6e4f1c"></i>
+          <i style="background:#4a3a18"></i><i style="background:#2a2210"></i>
+          <i style="background:#0e0c08"></i>
+        </div>
+        <div class="escala">
+          <i style="background:#0e0c08"></i><i style="background:#2a2210"></i>
+          <i style="background:#4a3a18"></i><i style="background:#6e4f1c"></i>
+          <i style="background:#a07a30"></i><i style="background:#d8d2c4"></i>
+        </div>
+        <div class="finetext" id="fine">PROPIEDAD DE LA REPETIDORA LOCAL</div>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <span class="left">
+        <span id="status">Pausa técnica</span>
+        <button class="btn dim" id="mute">Sonido: on</button>
+      </span>
+      <a class="btn" data-go="index.html" href="index.html">Guía</a>
+    </footer>
+  </main>
+
+<script src="assets/senal.js"></script>
+<script>
+(function(){
+  var S = SENAL;
+
+  var GUION = [
+    {label:'Carta de ajuste', text:'Transmisión en pausa técnica.', hold:2600},
+    {label:'Carta de ajuste', text:'No hay nadie en el estudio.', hold:2600},
+    {label:'——', text:'Entonces, ¿quién ajusta la carta?', hold:3000},
+    {label:'Carta de ajuste', text:'Lea la letra pequeña. Todo contrato la tiene.', hold:3400}
+  ];
+
+  // el fragmento «TERMINA» rota por la letra pequeña y se aviva al pasar
+  var FINE = [
+    'PROPIEDAD DE LA REPETIDORA LOCAL',
+    'PROHIBIDA SU REPRODUCCIÓN TOTAL O PARCIAL',
+    'CALIBRACIÓN · 625 LÍNEAS · SIN OPERADOR',
+    'TERMINA',
+    'ESTE PATRÓN NO DEBE MIRARSE FIJO',
+    'EL AJUSTE CONTINÚA AUNQUE USTED NO'
+  ];
+
+  S.page({
+    ch: 4,
+    audio: {
+      master: 0.45,
+      hum: [[60,0.013],[120,0.008],[100,0.005]],
+      hiss: {gain:0.008, hp:1500},
+      tone: {freq:440, gain:0.022, wobble:2.4},
+      dropouts: {min:8000, max:18000, depth:0.3}
+    },
+    onAir: function(els){
+      S.snow(els.snow, {intensity:0.06, fps:13});
+
+      var fine = document.getElementById('fine'), fi = 0;
+      setInterval(function(){
+        fi = (fi + 1) % FINE.length;
+        fine.textContent = FINE[fi];
+        if (FINE[fi] === 'TERMINA'){
+          fine.classList.add('wake');
+          S.glitch(els.tube);
+        } else {
+          fine.classList.remove('wake');
+        }
+      }, 4200);
+
+      S.typer({
+        msgEl: els.msg, labelEl: els.label, guion: GUION,
+        corruption: 0.05, tube: els.tube, track: els.track,
+        onDone: function(){ els.status.textContent = 'El ajuste continúa'; }
+      });
+    }
+  });
+})();
+</script>
+</body>
+</html>

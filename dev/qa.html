@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>SEÑAL — QA</title>
+<style>body{font-family:monospace;background:#0a0a0d;color:#d8d2c4;padding:16px}
+.ok{color:#7dc97d}.bad{color:#ff2d3b}iframe{width:420px;height:300px;border:1px solid #444}</style>
+</head>
+<body>
+<h1>QA de páginas (solo desarrollo)</h1>
+<p>Carga cada página con un reloj simulado, enciende el tubo y registra errores de consola.
+Requiere abrir chromium con <code>--allow-file-access-from-files</code>.</p>
+<div id="log"></div>
+<div id="stage"></div>
+<script>
+(function(){
+  // [página, hora, minuto, query, descripción]
+  var SCENARIOS = [
+    ['index.html', 14, 0, '', 'guía en la tarde'],
+    ['index.html', 3, 10, '?v=12345', 'guía con canal 6 visible'],
+    ['canal1.html', 8, 0, '', 'c1 al aire (mañana)'],
+    ['canal1.html', 20, 0, '', 'c1 bloqueado (noche)'],
+    ['canal2.html', 15, 0, '', 'c2 al aire (tarde)'],
+    ['canal2.html', 8, 0, '', 'c2 bloqueado (mañana)'],
+    ['canal3.html', 21, 0, '', 'c3 al aire (noche)'],
+    ['canal3.html', 10, 0, '', 'c3 bloqueado (mañana)'],
+    ['canal4.html', 2, 0, '', 'c4 al aire (madrugada)'],
+    ['canal4.html', 14, 0, '', 'c4 bloqueado (tarde)'],
+    ['canal5.html', 1, 0, '', 'c5 al aire (madrugada)'],
+    ['canal5.html', 14, 0, '', 'c5 bloqueado (tarde)'],
+    ['canal6.html', 3, 10, '', 'c6 al aire (ventana)'],
+    ['canal6.html', 3, 40, '', 'c6 bloqueado (3:40)'],
+    ['canal7.html', 12, 0, '?v=123456', 'c7 al aire (las seis abiertas)'],
+    ['canal7.html', 12, 0, '?v=125', 'c7 bloqueado (faltan)'],
+    ['test.html', 12, 0, '', 'pruebas de reglas']
+  ];
+
+  var WAIT = 6000; // ms por escenario, suficiente para tipeo + glitches
+  var logEl = document.getElementById('log');
+  var stage = document.getElementById('stage');
+  var errors = [], idx = -1, frame = null, results = [];
+
+  window.addEventListener('message', function(e){
+    if (e.data && e.data.t === 'err') errors.push(e.data.msg);
+  });
+
+  function shim(h, m, page, qs){
+    return '<scr'+'ipt>(function(){' +
+      'window.__SENAL_QS = "' + (qs || '') + '";' +
+      'var RD = Date;' +
+      'var base = new RD(2026,5,9,' + h + ',' + m + ',0).getTime();' +
+      'var off = base - RD.now();' +
+      'function FD(){' +
+      '  if (arguments.length){' +
+      '    return new (Function.prototype.bind.apply(RD,[null].concat([].slice.call(arguments))))();' +
+      '  }' +
+      '  return new RD(RD.now() + off);' +
+      '}' +
+      'FD.now = function(){ return RD.now() + off; };' +
+      'FD.parse = RD.parse; FD.UTC = RD.UTC; FD.prototype = RD.prototype;' +
+      'window.Date = FD;' +
+      'window.onerror = function(msg, src, line){ parent.postMessage({t:"err", msg:"' + page + ': " + msg + " L" + line}, "*"); };' +
+      'window.addEventListener("unhandledrejection", function(ev){ parent.postMessage({t:"err", msg:"' + page + ': rejection " + ev.reason}, "*"); });' +
+      'var ce = console.error.bind(console);' +
+      'console.error = function(){ parent.postMessage({t:"err", msg:"' + page + ': console.error " + [].join.call(arguments," ")}, "*"); ce.apply(null, arguments); };' +
+      '})();</scr'+'ipt>';
+  }
+
+  function report(line, ok){
+    var d = document.createElement('div');
+    d.className = ok ? 'ok' : 'bad';
+    d.textContent = line;
+    logEl.appendChild(d);
+  }
+
+  function next(){
+    if (frame){ stage.removeChild(frame); frame = null; }
+    idx++;
+    if (idx >= SCENARIOS.length){ finish(); return; }
+    var sc = SCENARIOS[idx];
+    errors = [];
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', (sc[0]==='test.html' ? './' : '../docs/') + sc[0], true);
+    xhr.onload = function(){
+      var html = xhr.responseText.replace('<head>', '<head><base href="../docs/">' + shim(sc[1], sc[2], sc[4], sc[3]));
+      frame = document.createElement('iframe');
+      stage.appendChild(frame);
+      // srcdoc hereda la base del padre: las rutas assets/ resuelven igual
+      frame.srcdoc = html;
+      frame.onload = function(){
+        try {
+          var btn = frame.contentDocument.getElementById('powerBtn');
+          if (btn) btn.click();
+        } catch(e){ errors.push(sc[4] + ': driver ' + e.message); }
+        setTimeout(function(){
+          var ok = errors.length === 0;
+          results.push(ok);
+          report((ok ? 'OK   ' : 'FALLA ') + sc[4] + (ok ? '' : ' → ' + errors.join(' | ')), ok);
+          next();
+        }, WAIT);
+      };
+    };
+    xhr.onerror = function(){
+      results.push(false);
+      report('FALLA ' + sc[4] + ' → no se pudo leer ' + sc[0] + ' (¿--allow-file-access-from-files?)', false);
+      next();
+    };
+    xhr.send();
+  }
+
+  function finish(){
+    var bad = results.filter(function(r){ return !r; }).length;
+    var line = bad === 0 ? 'QA PASS ' + results.length + '/' + results.length
+                         : 'QA FAIL ' + bad + ' de ' + results.length;
+    report(line, bad === 0);
+    document.title = line;
+    console.log('[SENAL-QA] ' + line);
+  }
+
+  next();
+})();
+</script>
+</body>
+</html>

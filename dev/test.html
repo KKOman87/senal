@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEÑAL — pruebas de desbloqueo</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../docs/assets/senal.css">
+</head>
+<body class="scroll">
+<div class="testwrap">
+  <h1>Pruebas de desbloqueo</h1>
+  <p>Simula relojes y comprueba cada regla, incluida la ventana 03:00–03:33 del canal 6.
+     No forma parte de la transmisión.</p>
+  <div class="summary" id="summary">corriendo…</div>
+  <table id="results">
+    <thead><tr><th>#</th><th>Caso</th><th>Esperado</th><th>Obtenido</th><th>Estado</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script src="../docs/assets/senal.js"></script>
+<script>
+(function(){
+  var S = SENAL;
+  var rows = [], passed = 0, failed = 0;
+
+  function at(h, m){ return new Date(2026, 5, 9, h, m || 0, 0); }
+  var ALL6 = S.parseVisited('123456');
+  var NONE = new Set();
+
+  function check(name, got, want){
+    var ok = (got === want);
+    if (ok) passed++; else failed++;
+    rows.push({name:name, want:want, got:got, ok:ok});
+  }
+
+  function unlockCase(ch, h, m, visited, want){
+    var v = visited || NONE;
+    check('canal ' + ch + ' @ ' + S.two(h) + ':' + S.two(m || 0) +
+          (visited ? ' (v=' + S.visitedToString(visited) + ')' : ''),
+          S.isUnlocked(ch, at(h, m), v), want);
+  }
+
+  /* ---- franjas ---- */
+  check('franja 00h = madrugada', S.band(0), 'madrugada');
+  check('franja 04h = madrugada', S.band(4), 'madrugada');
+  check('franja 05h = mañana',    S.band(5), 'mañana');
+  check('franja 11h = mañana',    S.band(11), 'mañana');
+  check('franja 12h = tarde',     S.band(12), 'tarde');
+  check('franja 18h = tarde',     S.band(18), 'tarde');
+  check('franja 19h = noche',     S.band(19), 'noche');
+  check('franja 23h = noche',     S.band(23), 'noche');
+
+  /* ---- canal 1: mañana + tarde (05–19) ---- */
+  unlockCase(1, 4, 59, null, false);
+  unlockCase(1, 5, 0,  null, true);
+  unlockCase(1, 11, 0, null, true);
+  unlockCase(1, 12, 0, null, true);
+  unlockCase(1, 18, 59, null, true);
+  unlockCase(1, 19, 0, null, false);
+  unlockCase(1, 0, 0,  null, false);
+
+  /* ---- canal 2: tarde + noche (12–24) ---- */
+  unlockCase(2, 11, 59, null, false);
+  unlockCase(2, 12, 0,  null, true);
+  unlockCase(2, 18, 0,  null, true);
+  unlockCase(2, 19, 0,  null, true);
+  unlockCase(2, 23, 59, null, true);
+  unlockCase(2, 0, 0,   null, false);
+  unlockCase(2, 5, 0,   null, false);
+
+  /* ---- canal 3: noche + madrugada (19–05) ---- */
+  unlockCase(3, 18, 59, null, false);
+  unlockCase(3, 19, 0,  null, true);
+  unlockCase(3, 23, 0,  null, true);
+  unlockCase(3, 0, 0,   null, true);
+  unlockCase(3, 4, 59,  null, true);
+  unlockCase(3, 5, 0,   null, false);
+  unlockCase(3, 12, 0,  null, false);
+
+  /* ---- canal 4: madrugada + mañana (00–12) ---- */
+  unlockCase(4, 0, 0,   null, true);
+  unlockCase(4, 5, 0,   null, true);
+  unlockCase(4, 11, 59, null, true);
+  unlockCase(4, 12, 0,  null, false);
+  unlockCase(4, 19, 0,  null, false);
+
+  /* ---- canal 5: madrugada (00–05) ---- */
+  unlockCase(5, 0, 0,   null, true);
+  unlockCase(5, 3, 0,   null, true);
+  unlockCase(5, 4, 59,  null, true);
+  unlockCase(5, 5, 0,   null, false);
+  unlockCase(5, 12, 0,  null, false);
+  unlockCase(5, 23, 0,  null, false);
+
+  /* ---- canal 6: solo 03:00–03:33, bordes exactos ---- */
+  unlockCase(6, 2, 59,  null, false);
+  unlockCase(6, 3, 0,   null, true);
+  unlockCase(6, 3, 1,   null, true);
+  unlockCase(6, 3, 33,  null, true);
+  unlockCase(6, 3, 34,  null, false);
+  unlockCase(6, 3, 59,  null, false);
+  unlockCase(6, 4, 0,   null, false);
+  unlockCase(6, 15, 20, null, false);
+  check('canal 6 no existe @ 02:59', S.exists(6, at(2,59)), false);
+  check('canal 6 existe @ 03:00',    S.exists(6, at(3,0)),  true);
+  check('canal 6 existe @ 03:33',    S.exists(6, at(3,33)), true);
+  check('canal 6 no existe @ 03:34', S.exists(6, at(3,34)), false);
+
+  /* ---- canal 7: requiere haber abierto 1–6, a cualquier hora ---- */
+  unlockCase(7, 12, 0, ALL6, true);
+  unlockCase(7, 3, 15, ALL6, true);
+  unlockCase(7, 0, 0,  ALL6, true);
+  unlockCase(7, 12, 0, S.parseVisited('12345'), false);   // falta el 6
+  unlockCase(7, 12, 0, S.parseVisited('123457'), false);  // el propio 7 no cuenta
+  unlockCase(7, 12, 0, NONE, false);
+  unlockCase(7, 12, 0, S.parseVisited('6'), false);
+
+  /* ---- estado por URL ---- */
+  check('parseVisited("3162") ordena', S.visitedToString(S.parseVisited('3162')), '1236');
+  check('parseVisited ignora basura', S.visitedToString(S.parseVisited('9x08')), '');
+  check('parseVisited dedup', S.visitedToString(S.parseVisited('111222')), '12');
+
+  /* ---- frase final ---- */
+  check('frase exacta', S.normalizePhrase('LA SEÑAL NO TERMINA CUANDO TE DUERMES') === S.PHRASE_KEY, true);
+  check('frase en minúsculas y sin ñ', S.normalizePhrase('la senal no termina cuando te duermes') === S.PHRASE_KEY, true);
+  check('frase con signos', S.normalizePhrase('¡La señal no termina... cuando te duermes!') === S.PHRASE_KEY, true);
+  check('frase incompleta falla', S.normalizePhrase('la señal no termina') === S.PHRASE_KEY, false);
+  check('orden equivocado falla', S.normalizePhrase('señal la no termina cuando te duermes') === S.PHRASE_KEY, false);
+
+  /* ---- render ---- */
+  var tb = document.querySelector('#results tbody');
+  var html = '';
+  rows.forEach(function(r, i){
+    html += '<tr><td>' + (i+1) + '</td><td>' + r.name + '</td><td>' + r.want +
+      '</td><td>' + r.got + '</td><td class="' + (r.ok ? 'pass' : 'fail') + '">' +
+      (r.ok ? 'PASA' : 'FALLA') + '</td></tr>';
+  });
+  tb.innerHTML = html;
+  var sum = document.getElementById('summary');
+  if (failed === 0){
+    sum.textContent = passed + ' / ' + rows.length + ' pruebas pasan';
+    sum.className = 'summary pass';
+  } else {
+    sum.textContent = failed + ' pruebas FALLAN de ' + rows.length;
+    sum.className = 'summary fail';
+  }
+  document.title = (failed === 0 ? 'PASS ' : 'FAIL ') + passed + '/' + rows.length;
+  console.log('[SENAL-TEST] ' + (failed === 0 ? 'PASS' : 'FAIL') + ' ' + passed + '/' + rows.length);
+  rows.forEach(function(r){ if (!r.ok) console.error('[SENAL-TEST] FALLA: ' + r.name); });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEÑAL — guía de programación</title>
+<meta name="description" content="Siete canales que emiten según tu reloj. Algunos esperan a la madrugada. Mejor con sonido.">
+<meta name="theme-color" content="#07070a">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SEÑAL">
+<meta property="og:locale" content="es_ES">
+<meta property="og:title" content="SEÑAL — transmisión sin origen">
+<meta property="og:description" content="Siete canales que emiten según tu reloj. Algunos esperan a la madrugada. Mejor con sonido.">
+<meta property="og:url" content="https://kkoman87.github.io/senal/">
+<meta property="og:image" content="https://kkoman87.github.io/senal/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="SEÑAL — transmisión sin origen">
+<meta name="twitter:description" content="Siete canales que emiten según tu reloj. Algunos esperan a la madrugada. Mejor con sonido.">
+<meta name="twitter:image" content="https://kkoman87.github.io/senal/assets/og.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/senal.css">
+</head>
+<body>
+  <div class="turnon" id="turnon"></div>
+
+  <div class="power" id="power">
+    <div class="hint">red de repetidoras · guía de programación</div>
+    <button id="powerBtn">▶ Encender</button>
+    <div class="hint" style="font-size:12px;opacity:.6">algunos canales no emiten a toda hora</div>
+  </div>
+
+  <main class="tube" id="tube" aria-live="polite">
+    <div class="grain"></div>
+    <canvas class="snow" id="snow" aria-hidden="true"></canvas>
+    <div class="track" id="track"></div>
+
+    <header class="head">
+      <span>Guía · siete frecuencias</span>
+      <span class="right">
+        <span class="rec"><span class="dot"></span>AIRE</span>
+        <span id="clock">--:--:--</span>
+      </span>
+    </header>
+
+    <nav class="guide" id="guide" aria-label="Canales"></nav>
+
+    <footer class="foot">
+      <span class="left">
+        <span id="status">Repetidora local · sin licencia</span>
+        <button class="btn dim" id="mute">Sonido: on</button>
+      </span>
+      <span id="franja"></span>
+    </footer>
+  </main>
+
+  <div class="aviso" id="aviso">
+    <span>Horror psicológico · mejor con sonido y en pantalla grande.</span>
+    <button id="avisoX" aria-label="Cerrar aviso">×</button>
+  </div>
+
+<script src="assets/senal.js"></script>
+<script>
+(function(){
+  var S = SENAL;
+  S.readState();
+
+  var guide   = document.getElementById('guide');
+  var franja  = document.getElementById('franja');
+  var tube    = document.getElementById('tube');
+  var snowEl  = document.getElementById('snow');
+  var power   = document.getElementById('power');
+  var powerBtn= document.getElementById('powerBtn');
+  var turnon  = document.getElementById('turnon');
+  var muteEl  = document.getElementById('mute');
+  S.startClock(document.getElementById('clock'));
+
+  // fuerza de señal según corrupción del canal (incluso en emisión, el 7 apenas llega)
+  var FUERZA = {1:5, 2:5, 3:4, 4:4, 5:3, 6:2, 7:1};
+
+  function row(ch, d){
+    var meta = S.CH[ch];
+    var open = S.isUnlocked(ch, d, S.state.v);
+    var here = S.exists(ch, d);
+
+    if (ch === 6 && !here){
+      // fuera de su ventana, el 6 no es un canal: es un hueco
+      return '<div class="chan ghost dead" aria-hidden="true">' +
+        '<span class="num">—</span>' +
+        '<span class="info"><span class="name">· · ·</span>' +
+        '<span class="sched">esta posición no está asignada</span></span>' +
+        '<span class="meta"><span class="bars" data-s="0"><i></i><i></i><i></i><i></i><i></i></span>' +
+        '<span class="state">——</span></span></div>';
+    }
+
+    var seen = S.state.v.has(ch);
+    var cls = 'chan ' + (open ? 'live' : 'dead') + (seen ? ' seen' : '');
+    var bars = open ? FUERZA[ch] : 0;
+    var extra = '';
+    if (ch === 7 && !open){
+      var falta = 0;
+      for (var i=1;i<=6;i++) if(!S.state.v.has(i)) falta++;
+      extra = ' · faltan ' + falta + ' de 6';
+    }
+    return '<a class="' + cls + '" href="' + S.href(meta.page) + '">' +
+      '<span class="num">' + (ch===6 ? '∙6∙' : '0'+ch) + '</span>' +
+      '<span class="info"><span class="name">' + meta.name + '</span>' +
+      '<span class="sched">' + meta.hint + extra + '</span></span>' +
+      '<span class="meta"><span class="bars' + (open?'':' flick') + '" data-s="' + bars + '">' +
+      '<i></i><i></i><i></i><i></i><i></i></span>' +
+      '<span class="state">' + (open ? 'En emisión' : 'Sin señal') + '</span></span></a>';
+  }
+
+  var lastKey = '';
+  function paint(){
+    var d = new Date();
+    var key = d.getHours() + ':' + d.getMinutes() + ':' + S.visitedToString(S.state.v);
+    if (key === lastKey) return;
+    lastKey = key;
+    var html = '';
+    for (var ch=1; ch<=7; ch++) html += row(ch, d);
+    guide.innerHTML = html;
+    var b = S.band(d.getHours());
+    franja.textContent = 'Franja: ' + b;
+  }
+
+  function paintMute(){ muteEl.textContent = 'Sonido: ' + (S.state.m ? 'off' : 'on'); }
+  paintMute();
+  muteEl.addEventListener('click', function(){
+    S.setMuted(!S.state.m); paintMute(); paint(); lastKey='';
+    paint();
+  });
+
+  paint();
+  setInterval(function(){ lastKey=''; paint(); }, 5000);
+
+  powerBtn.addEventListener('click', function(){
+    S.buildAudio({
+      master: 0.4,
+      hum: [[60,0.012],[120,0.007],[50,0.005]],
+      hiss: {gain:0.009, hp:1400},
+      shimmer: {freq:8200, gain:0.0018},
+      dropouts: {min:4000, max:11000, depth:0.1, onDrop:function(){ S.roll(tube); }}
+    });
+    if (S.audio.ctx && S.audio.ctx.state==='suspended') S.audio.ctx.resume().catch(function(){});
+    power.classList.add('off');
+    if (!S.reduce) turnon.classList.add('go');
+    setTimeout(function(){ tube.classList.add('on'); }, S.reduce?100:650);
+  });
+
+  // nieve muy tenue de fondo, la guía respira encima
+  S.snow(snowEl, {intensity:0.07, fps:12});
+
+  document.getElementById('avisoX').addEventListener('click', function(){
+    document.getElementById('aviso').remove();
+  });
+})();
+</script>
+</body>
+</html>

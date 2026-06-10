@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEÑAL — canal 07</title>
+<meta name="description" content="Esta emisión no se repite.">
+<meta name="theme-color" content="#07070a">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SEÑAL">
+<meta property="og:locale" content="es_ES">
+<meta property="og:title" content="SEÑAL — canal 07 · la respuesta">
+<meta property="og:description" content="Esta emisión no se repite.">
+<meta property="og:url" content="https://kkoman87.github.io/senal/canal7.html">
+<meta property="og:image" content="https://kkoman87.github.io/senal/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="SEÑAL — canal 07 · la respuesta">
+<meta name="twitter:description" content="Esta emisión no se repite.">
+<meta name="twitter:image" content="https://kkoman87.github.io/senal/assets/og.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/senal.css">
+<style>:root{--bleed:3.4px}</style>
+</head>
+<body>
+  <div class="turnon" id="turnon"></div>
+
+  <div class="power" id="power">
+    <div class="hint">canal 07 · la respuesta</div>
+    <button id="powerBtn">▶ Sintonizar</button>
+    <div class="hint" style="font-size:12px;opacity:.6">esta emisión no se repite</div>
+  </div>
+
+  <main class="tube" id="tube" aria-live="polite">
+    <div class="grain"></div>
+    <canvas class="snow" id="snow" aria-hidden="true"></canvas>
+    <div class="track" id="track"></div>
+
+    <header class="head">
+      <span>Canal 07 · la respuesta</span>
+      <span class="right">
+        <span class="rec"><span class="dot"></span>AIRE</span>
+        <span id="clock">--:--:--</span>
+      </span>
+    </header>
+
+    <section class="tbody" id="tbody">
+      <div class="label" id="label">Última frecuencia</div>
+      <p class="msg" id="msg"><span class="cursor"></span></p>
+      <div class="phrase" id="phrase" style="display:none">
+        <input id="answer" type="text" autocomplete="off" spellcheck="false"
+               aria-label="Las siete palabras, en orden" placeholder="las siete palabras, en orden">
+        <button class="btn" id="send">Transmitir</button>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <span class="left">
+        <span id="status">Esperando las palabras</span>
+        <button class="btn dim" id="mute">Sonido: on</button>
+      </span>
+      <a class="btn" data-go="index.html" href="index.html">Guía</a>
+    </footer>
+  </main>
+
+  <div class="dieline" id="dieline" role="dialog" aria-label="Fin de la transmisión">
+    <p class="last" id="lastline"></p>
+  </div>
+
+<script src="assets/senal.js"></script>
+<script>
+(function(){
+  var S = SENAL;
+
+  var GUION = [
+    {label:'——', text:'Llegaste. Seis puertas abiertas. Casi nadie llega.', hold:2400},
+    {label:'——', text:'Te dimos una palabra por canal. Guardamos la séptima nosotros.'},
+    {label:'——', text:'La séptima es lo que haces todas las noches sin pedirnos permiso.', hold:2800},
+    {label:'——', text:'Júntalas. Dilas en orden. En voz alta no: aquí abajo.', hold:1600}
+  ];
+
+  var MALAS = [
+    'Eso no es lo que te dimos. Vuelve a mirar.',
+    'Te falta orden, o te falta una palabra. Las puertas siguen abiertas.',
+    'No adivines. Las palabras se encuentran, no se inventan.'
+  ];
+  var malas = 0;
+
+  function flashWord(els){
+    var prev = els.label.textContent;
+    els.label.textContent = '· DUERMES ·';
+    S.glitch(els.tube);
+    setTimeout(function(){ els.label.textContent = prev; }, S.reduce ? 1600 : 420);
+  }
+
+  function finalSequence(els){
+    S.killAudio(2.0);
+    var die = document.getElementById('dieline');
+    var last = document.getElementById('lastline');
+    var d = new Date();
+    last.textContent =
+      'Son las ' + S.two(d.getHours()) + ':' + S.two(d.getMinutes()) +
+      '. Apaga la pantalla cuando quieras: ya no hace falta. ' +
+      'La señal no termina cuando te duermes. Tú tampoco. ' +
+      'Buenas noches. Nos vemos en la madrugada.';
+    die.classList.add('go');
+  }
+
+  S.page({
+    ch: 7,
+    audio: {
+      master: 0.55,
+      hum: [[50,0.016],[60,0.012],[120,0.009]],
+      hiss: {gain:0.034, hp:550},
+      heartbeat: {bpm:50, gain:0.55},
+      voices: [{f0:98, gain:0.05},{f0:118, gain:0.04},{f0:139, gain:0.03}],
+      interval: {notes:[523,494,466], dur:0.5, gap:13, gain:0.030, detune:34},
+      dropouts: {min:2000, max:5000, depth:0.05}
+    },
+    onAir: function(els){
+      S.snow(els.snow, {intensity:0.30, fps:20});
+      setInterval(function(){ flashWord(els); }, 14000);
+
+      S.typer({
+        msgEl: els.msg, labelEl: els.label, guion: GUION,
+        corruption: 0.5, tube: els.tube, track: els.track,
+        onLine: function(n){ if (n === 2) setTimeout(function(){ flashWord(els); }, 700); },
+        onDone: function(){
+          document.getElementById('phrase').style.display = 'flex';
+          els.msg.innerHTML = 'Te escuchamos.<span class="cursor"></span>';
+          var input = document.getElementById('answer');
+          var send = document.getElementById('send');
+          input.focus();
+          function probar(){
+            if (S.normalizePhrase(input.value) === S.PHRASE_KEY){
+              els.status.textContent = 'Recibido';
+              finalSequence(els);
+            } else {
+              S.glitch(els.tube); S.roll(els.tube);
+              els.msg.innerHTML = MALAS[Math.min(malas, MALAS.length-1)] +
+                '<span class="cursor"></span>';
+              malas++;
+              input.value = '';
+            }
+          }
+          send.addEventListener('click', probar);
+          input.addEventListener('keydown', function(e){ if (e.key === 'Enter') probar(); });
+        }
+      });
+    }
+  });
+})();
+</script>
+</body>
+</html>

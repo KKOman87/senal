@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEÑAL — canal 03</title>
+<meta name="description" content="El participante de esta noche ya está conectado.">
+<meta name="theme-color" content="#07070a">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SEÑAL">
+<meta property="og:locale" content="es_ES">
+<meta property="og:title" content="SEÑAL — canal 03 · el concurso">
+<meta property="og:description" content="El participante de esta noche ya está conectado.">
+<meta property="og:url" content="https://kkoman87.github.io/senal/canal3.html">
+<meta property="og:image" content="https://kkoman87.github.io/senal/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="SEÑAL — canal 03 · el concurso">
+<meta name="twitter:description" content="El participante de esta noche ya está conectado.">
+<meta name="twitter:image" content="https://kkoman87.github.io/senal/assets/og.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/senal.css">
+<style>:root{--bleed:2px}</style>
+</head>
+<body>
+  <div class="turnon" id="turnon"></div>
+
+  <div class="power" id="power">
+    <div class="hint">canal 03 · el concurso</div>
+    <button id="powerBtn">▶ Sintonizar</button>
+    <div class="hint" style="font-size:12px;opacity:.6">participación desde casa · sin operadora</div>
+  </div>
+
+  <main class="tube" id="tube" aria-live="polite">
+    <div class="grain"></div>
+    <canvas class="snow" id="snow" aria-hidden="true"></canvas>
+    <div class="track" id="track"></div>
+
+    <header class="head">
+      <span>Canal 03 · el concurso</span>
+      <span class="right">
+        <span class="rec"><span class="dot"></span>AIRE</span>
+        <span id="clock">--:--:--</span>
+      </span>
+    </header>
+
+    <section class="tbody" id="tbody">
+      <div class="label" id="label">Aplausos grabados</div>
+      <p class="msg" id="msg"><span class="cursor"></span></p>
+    </section>
+
+    <footer class="foot">
+      <span class="left">
+        <span id="status">Participante en línea: 1</span>
+        <button class="btn dim" id="mute">Sonido: on</button>
+      </span>
+      <a class="btn" data-go="index.html" href="index.html">Guía</a>
+    </footer>
+  </main>
+
+<script src="assets/senal.js"></script>
+<script>
+(function(){
+  var S = SENAL;
+
+  var GUION = [
+    {label:'El concurso', text:'¡Bienvenidos de vuelta! El premio de esta noche sigue siendo el mismo de siempre.'},
+    {label:'Participante único', text:'La línea está abierta y el participante de hoy ya está conectado. Eres tú.'},
+    {label:'Pregunta por mil', text:'¿Qué se ve cuando la pantalla solo muestra nieve? Mira bien. Mira la nieve.', hold:5200},
+    {label:'Respuesta correcta', text:'Exacto. Esa palabra. El público no aplaude porque el público se fue hace años.'},
+    {label:'El concurso', text:'Tercera palabra anotada. Vuelve mañana: aquí siempre es la misma noche.', hold:3200}
+  ];
+
+  S.page({
+    ch: 3,
+    audio: {
+      master: 0.5,
+      hum: [[60,0.015],[120,0.010],[50,0.007]],
+      hiss: {gain:0.018, hp:950},
+      shimmer: {freq:7600, gain:0.0026},
+      // sintonía de programa que se va desafinando con cada vuelta
+      interval: {notes:[659,784,659,523], dur:0.34, gap:9, gain:0.040, detune:22},
+      dropouts: {min:4000, max:9000, depth:0.12}
+    },
+    onAir: function(els){
+      // el fragmento «NO» aparece unos segundos dentro de la estática
+      S.snow(els.snow, {intensity:0.16, fps:18, word:'NO', wordEvery:8000, wordFor:1600});
+      S.typer({
+        msgEl: els.msg, labelEl: els.label, guion: GUION,
+        corruption: 0.14, tube: els.tube, track: els.track,
+        onLine: function(n){ if (n === 2) S.roll(els.tube); },
+        onDone: function(){ els.status.textContent = 'Premio retenido · sin ganadores desde 1991'; }
+      });
+    }
+  });
+})();
+</script>
+</body>
+</html>

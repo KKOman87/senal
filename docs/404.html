@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEÑAL — canal no encontrado</title>
+<meta name="description" content="Esta frecuencia no existe. Todavía.">
+<meta name="theme-color" content="#07070a">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Spectral:ital@1&display=swap" rel="stylesheet">
+<style>
+/* autosuficiente a propósito: el 404 se sirve en cualquier ruta */
+:root{--void:#07070a;--bone:#d8d2c4;--bone-dim:#7e796d;--amber:#c9923c;--amber-deep:#6e4f1c;--bleed-r:#ff2d3b;--bleed-c:#1fd6ff}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:var(--void);overflow:hidden}
+body{font-family:'VT323',monospace;color:var(--bone);display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(120% 90% at 50% 42%, #161208 0%, #0a0a0d 38%, var(--void) 78%)}
+.tube{position:relative;width:min(900px,94vw);height:min(620px,90vh);padding:clamp(18px,5vw,56px);
+  display:flex;flex-direction:column;overflow:hidden;border-radius:8px / 18px;
+  box-shadow:inset 0 0 120px 30px rgba(0,0,0,.9),0 0 80px rgba(0,0,0,.8)}
+.tube::before{content:"";position:absolute;inset:0;z-index:6;pointer-events:none;mix-blend-mode:multiply;
+  background:repeating-linear-gradient(to bottom,rgba(0,0,0,0) 0,rgba(0,0,0,0) 2px,rgba(0,0,0,.28) 3px,rgba(0,0,0,.28) 4px)}
+.tube::after{content:"";position:absolute;inset:-2px;z-index:7;pointer-events:none;
+  background:radial-gradient(120% 110% at 50% 50%, transparent 55%, rgba(0,0,0,.75) 100%)}
+canvas{position:absolute;inset:0;z-index:4;width:100%;height:100%;opacity:.5;image-rendering:pixelated}
+.head{display:flex;justify-content:space-between;border-bottom:1px solid var(--amber-deep);padding-bottom:8px;
+  letter-spacing:.18em;font-size:clamp(12px,1.6vw,16px);color:var(--amber);text-transform:uppercase;position:relative;z-index:9}
+.mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+  position:relative;z-index:9;text-align:center;padding:10px;
+  background:radial-gradient(62% 64% at 50% 50%, rgba(2,2,3,.82) 0%, rgba(2,2,3,.55) 55%, transparent 100%)}
+.nosig{letter-spacing:.4em;font-size:clamp(15px,2.2vw,20px);text-transform:uppercase;
+  text-shadow:-1.6px 0 var(--bleed-r),1.6px 0 var(--bleed-c)}
+.pista{font-family:'Spectral',serif;font-style:italic;font-size:clamp(15px,2.4vw,21px);color:var(--bone-dim);max-width:34ch;line-height:1.5}
+.foot{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--amber-deep);
+  padding-top:10px;font-size:clamp(12px,1.5vw,15px);letter-spacing:.16em;color:var(--bone-dim);position:relative;z-index:9}
+a.btn{font-family:'VT323',monospace;color:var(--amber);border:1px solid var(--amber-deep);padding:6px 16px;
+  letter-spacing:.24em;text-transform:uppercase;font-size:clamp(12px,1.6vw,15px);text-decoration:none;transition:.15s}
+a.btn:hover,a.btn:focus-visible{background:var(--amber);color:var(--void);outline:none}
+@media (prefers-reduced-motion: reduce){canvas{opacity:.4}}
+</style>
+</head>
+<body>
+  <main class="tube">
+    <canvas id="snow" aria-hidden="true"></canvas>
+    <header class="head"><span>Canal ?? · sin asignar</span><span id="clock">--:--:--</span></header>
+    <section class="mid">
+      <div class="nosig">Canal no encontrado</div>
+      <p class="pista">esta frecuencia no existe. o existió y alguien la devolvió.
+        la guía conoce las que quedan.</p>
+    </section>
+    <footer class="foot">
+      <span>404 · portadora ausente</span>
+      <a class="btn" id="home" href="/senal/">Guía</a>
+    </footer>
+  </main>
+<script>
+(function(){
+  // en dominio propio el sitio vive en la raíz; en github.io, bajo /senal/
+  var home = document.getElementById('home');
+  if (location.hostname.indexOf('github.io') === -1) home.href = '/';
+
+  function two(n){ return String(n).padStart(2,'0'); }
+  var clock = document.getElementById('clock');
+  function tick(){ var d=new Date(); clock.textContent=two(d.getHours())+':'+two(d.getMinutes())+':'+two(d.getSeconds()); }
+  tick(); setInterval(tick,1000);
+
+  var cv = document.getElementById('snow'), ctx = cv.getContext('2d');
+  var sw=160, sh=110; cv.width=sw; cv.height=sh;
+  var img = ctx.createImageData(sw,sh);
+  function frame(){
+    var d=img.data;
+    for(var i=0;i<d.length;i+=4){
+      var v=(Math.random()*255)|0;
+      d[i]=v; d[i+1]=v*0.96|0; d[i+2]=v*0.86|0; d[i+3]=255;
+    }
+    ctx.putImageData(img,0,0);
+  }
+  frame();
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    setInterval(frame, 1000/16);
+  }
+})();
+</script>
+</body>
+</html>
