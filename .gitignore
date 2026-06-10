@@ -6,3 +6,6 @@ SECURITY_AUDIT.md
 .env.*
 *.pem
 *.key
+
+# traspaso de sesión, interno
+SESSION.md
