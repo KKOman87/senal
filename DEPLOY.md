@@ -2,7 +2,9 @@
 
 ## URL en vivo
 
-**https://kkoman87.github.io/senal/**
+**https://senal.obsidiandistrict.com/** (dominio propio, activo desde 2026-06-09)
+
+La URL original **https://kkoman87.github.io/senal/** redirige sola al dominio.
 
 GitHub Pages sirve únicamente la carpeta **`docs/`** de la rama `main`
 (repo público `KKOman87/senal`). Lo público es exactamente:
@@ -32,7 +34,11 @@ git add -A && git commit -m "..." && git push
 
 Pages reconstruye solo en uno o dos minutos. No hay paso de build.
 
-## Dominio propio (opcional): senal.obsidiandistrict.com
+## Dominio propio: senal.obsidiandistrict.com — YA ACTIVO
+
+Hecho el 2026-06-09: CNAME `senal → kkoman87.github.io` (DNS only) creado en
+Cloudflare vía API, `docs/CNAME` commiteado, certificado emitido y HTTPS
+forzado. Lo que sigue es la referencia de cómo se montó.
 
 1. **En Cloudflare** (zona `obsidiandistrict.com`) crea este registro:
 
