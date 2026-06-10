@@ -98,7 +98,7 @@ entre las tres y las tres y media"*.
 6. **og.png:** chunks de texto PNG (Title/Author/Comment/Software) con un
    mensaje — visible con `strings og.png` o exiftool. Incluye la ventana
    03:00–03:33 y el puntero al DNS.
-7. **DNS TXT** (si se crea, requiere aprobación): `senal.obsidiandistrict.com`
+7. **DNS TXT** (creados 2026-06-09, confirmado por Kevin): `senal.obsidiandistrict.com`
    y `_senal.obsidiandistrict.com` con versos/pistas. `dig TXT senal.obsidiandistrict.com`.
 
 Ninguna capa nueva revela las 7 palabras ni su orden: son profundidad para el
