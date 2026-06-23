@@ -10,8 +10,12 @@
   --bleed-c:#1fd6ff;
   --rec:#e0463c;
   --bleed:1.4px;
+  /* reticle "locked-on" para elementos clickeables */
+  --reticle-lock:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%2728%27%20height%3D%2728%27%20viewBox%3D%270%200%2028%2028%27%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27%23e8e3d6%27%20stroke-width%3D%271.6%27%3E%3Cpath%20d%3D%27M5%209V5h4M23%209V5h-4M5%2019v4h4M23%2019v4h-4%27%2F%3E%3C%2Fg%3E%3Ccircle%20cx%3D%2714%27%20cy%3D%2714%27%20r%3D%272%27%20fill%3D%27%23ff2d3b%27%2F%3E%3C%2Fsvg%3E") 14 14, pointer;
 }
 *{margin:0;padding:0;box-sizing:border-box}
+/* cursor custom: reticle de sintonía (señal) en vez de la flecha del sistema */
+html,body,*{cursor:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%2728%27%20height%3D%2728%27%20viewBox%3D%270%200%2028%2028%27%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27%23dba74e%27%20stroke-width%3D%271.4%27%20opacity%3D%270.95%27%3E%3Ccircle%20cx%3D%2714%27%20cy%3D%2714%27%20r%3D%278%27%2F%3E%3Cpath%20d%3D%27M14%201v6M14%2021v6M1%2014h6M21%2014h6%27%2F%3E%3C%2Fg%3E%3Ccircle%20cx%3D%2714%27%20cy%3D%2714%27%20r%3D%271.3%27%20fill%3D%27%23dba74e%27%2F%3E%3C%2Fsvg%3E") 14 14, crosshair}
 html,body{height:100%;background:var(--void);overflow:hidden}
 body{
   font-family:'VT323',monospace;color:var(--bone);
@@ -31,7 +35,7 @@ body.scroll{overflow:auto;height:auto;min-height:100%}
 .power button{
   font-family:'VT323',monospace;background:transparent;color:var(--amber);
   border:1px solid var(--amber-deep);padding:14px 40px;letter-spacing:.4em;
-  text-transform:uppercase;font-size:20px;cursor:pointer;transition:.18s;
+  text-transform:uppercase;font-size:20px;cursor:var(--reticle-lock);transition:.18s;
 }
 .power button:hover,.power button:focus-visible{background:var(--amber);color:#020203;outline:none}
 .power button:focus-visible{box-shadow:0 0 0 2px var(--bone)}
@@ -121,7 +125,7 @@ body.scroll{overflow:auto;height:auto;min-height:100%}
 .btn{
   font-family:'VT323',monospace;background:transparent;color:var(--amber);
   border:1px solid var(--amber-deep);padding:6px 16px;letter-spacing:.24em;
-  text-transform:uppercase;font-size:clamp(12px,1.6vw,15px);cursor:pointer;transition:.15s;
+  text-transform:uppercase;font-size:clamp(12px,1.6vw,15px);cursor:var(--reticle-lock);transition:.15s;
   text-decoration:none;display:inline-block;
 }
 .btn:hover,.btn:focus-visible{background:var(--amber);color:var(--void);outline:none}
@@ -239,7 +243,7 @@ a.chan:hover,a.chan:focus-visible{border-color:var(--amber);background:rgba(201,
   color:var(--bone-dim);font-size:13px;letter-spacing:.14em;
   padding:7px 8px 7px 14px;max-width:92vw;text-align:center;
 }
-.aviso button{background:none;border:0;color:var(--bone-dim);font-family:inherit;font-size:17px;cursor:pointer;padding:0 6px;line-height:1}
+.aviso button{background:none;border:0;color:var(--bone-dim);font-family:inherit;font-size:17px;cursor:var(--reticle-lock);padding:0 6px;line-height:1}
 .aviso button:hover,.aviso button:focus-visible{color:var(--amber);outline:none}
 
 /* ---------- página de pruebas ---------- */
