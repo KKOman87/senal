@@ -532,7 +532,7 @@ var SENAL = (function () {
       var x = 16 + Math.random() * 54, y = 14 + Math.random() * 44, gap = 5 + Math.random() * 2.5;
       e1.style.left = x + '%'; e1.style.top = y + '%';
       e2.style.left = (x + gap) + '%'; e2.style.top = (y + (Math.random() * 1.6 - 0.8)) + '%';
-      e1.style.opacity = e2.style.opacity = (o.gain != null ? o.gain : 0.8);
+      e1.style.opacity = e2.style.opacity = (o.gain != null ? o.gain : 0.9);
       var hold = 1800 + Math.random() * 2200;
       setTimeout(function () {
         e1.classList.add('blink'); e2.classList.add('blink');
@@ -540,8 +540,11 @@ var SENAL = (function () {
       }, hold * 0.55);
       setTimeout(function () { e1.style.opacity = e2.style.opacity = 0; }, hold);
     }
+    var first = true;
     (function next() {
-      var g = (o.min || 9000) + Math.random() * ((o.max || 26000) - (o.min || 9000));
+      var g = first ? (o.first != null ? o.first : 2600)
+                    : (o.min || 9000) + Math.random() * ((o.max || 26000) - (o.min || 9000));
+      first = false;
       setTimeout(function () { look(); next(); }, g);
     })();
   }
@@ -554,8 +557,11 @@ var SENAL = (function () {
     box.style.setProperty('--for', (o.for || 620) + 'ms');
     box.innerHTML = SILHOUETTE_SVG; tube.appendChild(box);
     function flash() { box.classList.remove('show'); void box.offsetWidth; box.classList.add('show'); }
+    var first = true;
     (function next() {
-      var g = (o.min || 12000) + Math.random() * ((o.max || 32000) - (o.min || 12000));
+      var g = first ? (o.first != null ? o.first : 4200)
+                    : (o.min || 12000) + Math.random() * ((o.max || 32000) - (o.min || 12000));
+      first = false;
       setTimeout(function () { flash(); next(); }, g);
     })();
     return { flash: flash };
@@ -573,8 +579,11 @@ var SENAL = (function () {
       '<div class="bl">' + (o.note || 'NIGHT VISION · AUTO') + '</div>';
     tube.appendChild(hud);
     var lost = hud.querySelector('.lost');
+    var first = true;
     (function next() {
-      var g = (o.min || 6000) + Math.random() * ((o.max || 16000) - (o.min || 6000));
+      var g = first ? (o.first != null ? o.first : 3000)
+                    : (o.min || 6000) + Math.random() * ((o.max || 16000) - (o.min || 6000));
+      first = false;
       setTimeout(function () {
         lost.classList.add('on'); glitch(tube);
         setTimeout(function () { lost.classList.remove('on'); }, o.for || 700);
@@ -611,16 +620,19 @@ var SENAL = (function () {
       box.classList.remove('flash'); void box.offsetWidth; box.classList.add('flash');
       if (!o.silent) faceStinger();
     }
+    var first = true;
     (function next() {
-      var g = (o.min || 24000) + Math.random() * ((o.max || 70000) - (o.min || 24000));
+      var g = first ? (o.first != null ? o.first : 9000)
+                    : (o.min || 24000) + Math.random() * ((o.max || 70000) - (o.min || 24000));
+      first = false;
       setTimeout(function () { flash(); next(); }, g);
     })();
     return { flash: flash };
   }
 
-  // arranca los efectos opt-in de un canal (no hace nada con motion reducido)
-  function startFx(tube, fx) {
-    if (!tube || !fx || reduce) return;
+  // arranca los efectos opt-in de un canal. force=true ignora prefers-reduced-motion (preview)
+  function startFx(tube, fx, force) {
+    if (!tube || !fx || (reduce && !force)) return;
     if (fx.eyes) eyesFx(tube, fx.eyes);
     if (fx.silhouette) silhouetteFx(tube, fx.silhouette);
     if (fx.cam) camFx(tube, fx.cam);

@@ -151,9 +151,9 @@ body.scroll{overflow:auto;height:auto;min-height:100%}
 /* ojos que miran desde la estática */
 .watcher{position:absolute;inset:0;z-index:5;pointer-events:none;overflow:hidden}
 .watcher .eye{
-  position:absolute;width:15px;height:9px;border-radius:50%;opacity:0;
-  background:radial-gradient(circle at 50% 50%, #ffe6a8 0%, var(--amber) 36%, rgba(201,146,60,.22) 70%, transparent 100%);
-  box-shadow:0 0 14px 4px rgba(201,146,60,.45);transition:opacity 1.5s ease;will-change:opacity;
+  position:absolute;width:19px;height:12px;border-radius:50%;opacity:0;
+  background:radial-gradient(circle at 50% 50%, #fff0c8 0%, #ffd27a 30%, var(--amber) 52%, rgba(201,146,60,.25) 74%, transparent 100%);
+  box-shadow:0 0 20px 7px rgba(201,146,60,.55);transition:opacity 1.3s ease;will-change:opacity;
 }
 .watcher .eye::after{content:"";position:absolute;inset:30% 40%;background:#0a0805;border-radius:50%;opacity:.55}
 .watcher.red .eye{
