@@ -112,6 +112,10 @@
       laughter: {gain:0.016, f0:455, min:16000, max:42000},
       dropouts: {min:8000, max:18000, depth:0.3}
     },
+    fx: {
+      silhouette: {opacity:0.45, min:14000, max:36000},
+      eyes: {color:'red', gain:0.75, min:15000, max:40000}
+    },
     onAir: function(els){
       S.snow(els.snow, {intensity:0.06, fps:13});
 

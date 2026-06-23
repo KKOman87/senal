@@ -87,6 +87,10 @@
       laughter: {gain:0.014, f0:470, min:13000, max:34000},
       dropouts: {min:4000, max:9000, depth:0.12}
     },
+    fx: {
+      eyes: {gain:0.8, min:11000, max:30000},
+      face: {min:34000, max:80000}
+    },
     onAir: function(els){
       // el fragmento «NO» aparece unos segundos dentro de la estática
       S.snow(els.snow, {intensity:0.16, fps:18, word:'NO', wordEvery:8000, wordFor:1600});

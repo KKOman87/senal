@@ -92,6 +92,9 @@
       voices: [{f0:96, gain:0.022}],
       dropouts: {min:3000, max:8000, depth:0.1}
     },
+    fx: {
+      eyes: {color:'red', gain:0.75, min:13000, max:33000}
+    },
     onAir: function(els){
       S.snow(els.snow, {intensity:0.12, fps:17});
       S.typer({

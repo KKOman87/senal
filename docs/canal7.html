@@ -121,6 +121,11 @@
       interval: {notes:[523,494,466], dur:0.5, gap:13, gain:0.030, detune:34},
       dropouts: {min:2000, max:5000, depth:0.05}
     },
+    fx: {
+      silhouette: {opacity:0.5, min:10000, max:24000},
+      eyes: {color:'red', gain:0.85, min:9000, max:22000},
+      face: {min:26000, max:62000}
+    },
     onAir: function(els){
       S.snow(els.snow, {intensity:0.30, fps:20});
       setInterval(function(){ flashWord(els); }, 14000);

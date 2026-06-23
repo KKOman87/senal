@@ -126,6 +126,10 @@
       voices: [{f0:104, gain:0.045},{f0:131, gain:0.035}],
       dropouts: {min:2500, max:6000, depth:0.06}
     },
+    fx: {
+      cam: {id:'06', note:'CANAL NO LISTADO · 03:00–03:33', min:6000, max:15000},
+      silhouette: {opacity:0.4, min:11000, max:26000}
+    },
     onAir: function(els){
       snowing = S.snow(els.snow, {intensity:0.24, fps:19});
       typing = S.typer({

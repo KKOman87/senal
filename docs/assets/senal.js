@@ -487,6 +487,146 @@ var SENAL = (function () {
     audio.master.gain.setTargetAtTime(0, audio.ctx.currentTime, seconds || 0.5);
   }
 
+  /* ===================== efectos animatrónicos =====================
+     Inspiración: el «algo que te mira desde lo oscuro» de los animatrónicos
+     de feria. Arte original (mascota genérica), sin personajes con derechos.
+     Todo opt-in por canal vía cfg.fx; respeta prefers-reduced-motion. */
+
+  // mascota original: cara frontal (orejas, ojos ámbar, hocico, dientes)
+  var FACE_SVG =
+    '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">' +
+    '<g stroke="#3a2f18" stroke-width="2">' +
+    '<circle cx="50" cy="46" r="24" fill="#0d0b08"/><circle cx="150" cy="46" r="24" fill="#0d0b08"/>' +
+    '<path d="M28 92 Q28 38 100 38 Q172 38 172 92 Q172 172 100 178 Q28 172 28 92 Z" fill="#100d09"/>' +
+    '<ellipse cx="100" cy="146" rx="50" ry="32" fill="#16120b"/></g>' +
+    '<ellipse cx="72" cy="92" rx="17" ry="19" fill="#070605"/><ellipse cx="128" cy="92" rx="17" ry="19" fill="#070605"/>' +
+    '<circle cx="72" cy="92" r="10" fill="#ffd27a"/><circle cx="128" cy="92" r="10" fill="#ffd27a"/>' +
+    '<circle cx="72" cy="93" r="4.5" fill="#1a1206"/><circle cx="128" cy="93" r="4.5" fill="#1a1206"/>' +
+    '<ellipse cx="100" cy="126" rx="11" ry="8" fill="#070605"/>' +
+    '<g fill="#d8d2c4"><rect x="74" y="150" width="9" height="14" rx="1.5"/><rect x="86" y="152" width="9" height="15" rx="1.5"/>' +
+    '<rect x="98" y="152" width="9" height="15" rx="1.5"/><rect x="110" y="152" width="9" height="15" rx="1.5"/>' +
+    '<rect x="122" y="150" width="9" height="14" rx="1.5"/></g></svg>';
+
+  // misma mascota, de cuerpo entero y en silueta (para la tarima)
+  var SILHOUETTE_SVG =
+    '<svg viewBox="0 0 200 260" xmlns="http://www.w3.org/2000/svg">' +
+    '<g fill="#050505">' +
+    '<circle cx="58" cy="40" r="20"/><circle cx="142" cy="40" r="20"/>' +
+    '<path d="M40 70 Q40 24 100 24 Q160 24 160 70 Q160 120 100 124 Q40 120 40 70 Z"/>' +
+    '<path d="M62 118 Q60 150 56 200 Q54 240 70 250 L130 250 Q146 240 144 200 Q140 150 138 118 Q120 132 100 132 Q80 132 62 118 Z"/>' +
+    '<path d="M58 150 Q40 160 38 210 Q37 232 50 236 Q58 230 60 200 Z"/>' +
+    '<path d="M142 150 Q160 160 162 210 Q163 232 150 236 Q142 230 140 200 Z"/></g>' +
+    '<circle cx="80" cy="74" r="6" fill="#c9923c" opacity="0.85"/><circle cx="120" cy="74" r="6" fill="#c9923c" opacity="0.85"/></svg>';
+
+  // 1) OJOS EN LA ESTÁTICA: un par de ojos emerge del fondo, mira, parpadea, se va
+  function eyesFx(tube, o) {
+    o = o || {};
+    var layer = D.createElement('div');
+    layer.className = 'watcher' + (o.color === 'red' ? ' red' : '');
+    var e1 = D.createElement('div'), e2 = D.createElement('div');
+    e1.className = e2.className = 'eye';
+    var sc = o.size || 1;
+    e1.style.transform = e2.style.transform = 'scale(' + sc + ')';
+    layer.appendChild(e1); layer.appendChild(e2); tube.appendChild(layer);
+    function look() {
+      var x = 16 + Math.random() * 54, y = 14 + Math.random() * 44, gap = 5 + Math.random() * 2.5;
+      e1.style.left = x + '%'; e1.style.top = y + '%';
+      e2.style.left = (x + gap) + '%'; e2.style.top = (y + (Math.random() * 1.6 - 0.8)) + '%';
+      e1.style.opacity = e2.style.opacity = (o.gain != null ? o.gain : 0.8);
+      var hold = 1800 + Math.random() * 2200;
+      setTimeout(function () {
+        e1.classList.add('blink'); e2.classList.add('blink');
+        setTimeout(function () { e1.classList.remove('blink'); e2.classList.remove('blink'); }, 110);
+      }, hold * 0.55);
+      setTimeout(function () { e1.style.opacity = e2.style.opacity = 0; }, hold);
+    }
+    (function next() {
+      var g = (o.min || 9000) + Math.random() * ((o.max || 26000) - (o.min || 9000));
+      setTimeout(function () { look(); next(); }, g);
+    })();
+  }
+
+  // 2) SILUETA EN LA TARIMA: de pie detrás de la estática, asoma fracciones de segundo
+  function silhouetteFx(tube, o) {
+    o = o || {};
+    var box = D.createElement('div'); box.className = 'standee';
+    box.style.setProperty('--op', o.opacity != null ? o.opacity : 0.5);
+    box.style.setProperty('--for', (o.for || 620) + 'ms');
+    box.innerHTML = SILHOUETTE_SVG; tube.appendChild(box);
+    function flash() { box.classList.remove('show'); void box.offsetWidth; box.classList.add('show'); }
+    (function next() {
+      var g = (o.min || 12000) + Math.random() * ((o.max || 32000) - (o.min || 12000));
+      setTimeout(function () { flash(); next(); }, g);
+    })();
+    return { flash: flash };
+  }
+
+  // 3) HUD DE CÁMARA: reencuadre de vigilancia nocturna (tinte verde + CAM + SIGNAL LOST)
+  function camFx(tube, o) {
+    o = o || {};
+    var cast = D.createElement('div'); cast.className = 'camcast'; tube.appendChild(cast);
+    var hud = D.createElement('div'); hud.className = 'cam-hud';
+    hud.innerHTML =
+      '<div class="camid">CAM ' + (o.id || '0X') + '</div>' +
+      '<div class="camrec"><b></b>REC</div>' +
+      '<div class="lost">▮ SIGNAL LOST</div>' +
+      '<div class="bl">' + (o.note || 'NIGHT VISION · AUTO') + '</div>';
+    tube.appendChild(hud);
+    var lost = hud.querySelector('.lost');
+    (function next() {
+      var g = (o.min || 6000) + Math.random() * ((o.max || 16000) - (o.min || 6000));
+      setTimeout(function () {
+        lost.classList.add('on'); glitch(tube);
+        setTimeout(function () { lost.classList.remove('on'); }, o.for || 700);
+        next();
+      }, g);
+    })();
+  }
+
+  // stinger suave para acompañar el flash de cara (golpe metálico corto, no grito)
+  function faceStinger() {
+    var c = audio.ctx, m = audio.master; if (!c || !m || state.m) return;
+    var n = c.currentTime;
+    var buf = c.createBuffer(1, (c.sampleRate * 0.25) | 0, c.sampleRate);
+    var dd = buf.getChannelData(0); for (var i = 0; i < dd.length; i++) dd[i] = Math.random() * 2 - 1;
+    var src = c.createBufferSource(); src.buffer = buf;
+    var bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = 0.7;
+    var g = c.createGain(); g.gain.setValueAtTime(0, n);
+    g.gain.linearRampToValueAtTime(0.05, n + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, n + 0.22);
+    src.connect(bp); bp.connect(g); g.connect(m); src.start(n); src.stop(n + 0.25);
+    var o = c.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(120, n); o.frequency.exponentialRampToValueAtTime(45, n + 0.18);
+    var og = c.createGain(); og.gain.setValueAtTime(0.06, n); og.gain.exponentialRampToValueAtTime(0.0001, n + 0.2);
+    o.connect(og); og.connect(m); o.start(n); o.stop(n + 0.22);
+  }
+
+  // 4) CARA QUE PARPADEA: la mascota aparece 1-2 cuadros en los glitches fuertes
+  function faceFx(tube, o) {
+    o = o || {};
+    var box = D.createElement('div'); box.className = 'facejump';
+    box.style.setProperty('--op', o.opacity != null ? o.opacity : 0.92);
+    box.style.setProperty('--for', (o.for || 130) + 'ms');
+    box.innerHTML = FACE_SVG; tube.appendChild(box);
+    function flash() {
+      box.classList.remove('flash'); void box.offsetWidth; box.classList.add('flash');
+      if (!o.silent) faceStinger();
+    }
+    (function next() {
+      var g = (o.min || 24000) + Math.random() * ((o.max || 70000) - (o.min || 24000));
+      setTimeout(function () { flash(); next(); }, g);
+    })();
+    return { flash: flash };
+  }
+
+  // arranca los efectos opt-in de un canal (no hace nada con motion reducido)
+  function startFx(tube, fx) {
+    if (!tube || !fx || reduce) return;
+    if (fx.eyes) eyesFx(tube, fx.eyes);
+    if (fx.silhouette) silhouetteFx(tube, fx.silhouette);
+    if (fx.cam) camFx(tube, fx.cam);
+    if (fx.face) faceFx(tube, fx.face);
+  }
+
   /* ===================== máquina de escribir ===================== */
   var CURSOR = '<span class="cursor"></span>';
   var GLYPHS = '▓▒█·#%@';
@@ -640,7 +780,10 @@ var SENAL = (function () {
         els.power.classList.add('off');
         if (!reduce && els.turnon) els.turnon.classList.add('go');
         setTimeout(function () { els.tube.classList.add('on'); }, reduce ? 100 : 650);
-        setTimeout(function () { if (cfg.onAir) cfg.onAir(els); }, reduce ? 700 : 1500);
+        setTimeout(function () {
+          if (cfg.onAir) cfg.onAir(els);
+          startFx(els.tube, cfg.fx);
+        }, reduce ? 700 : 1500);
       });
     }
     return { open: true, els: els };
@@ -675,6 +818,7 @@ var SENAL = (function () {
     roll: roll,
     trackPass: trackPass,
     snow: snow,
+    startFx: startFx,
     buildAudio: buildAudio,
     killAudio: killAudio,
     audio: audio,
