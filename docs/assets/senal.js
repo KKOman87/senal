@@ -423,6 +423,40 @@ var SENAL = (function () {
       audio.stops.push(function () { clearInterval(mIv); });
     }
 
+    // risita de niño: ráfagas vocálicas agudas (sawtooth + dos formantes),
+    // muy leves y ocasionales, escondidas entre la estática
+    if (cfg.laughter) {
+      var lf = cfg.laughter;
+      var lvol = lf.gain != null ? lf.gain : 0.018;
+      function giggle() {
+        if (!audio.ctx || state.m) return;
+        var syll = 3 + (Math.random() * 4 | 0);                 // 3..6 sílabas
+        var base = (lf.f0 || 440) * (0.9 + Math.random() * 0.2); // voz aguda, varía
+        var t = actx.currentTime + 0.05;
+        for (var s = 0; s < syll; s++) {
+          var o = actx.createOscillator(); o.type = 'sawtooth';
+          var p = base * (1 - s * 0.02) * (0.98 + Math.random() * 0.08); // tiende a caer
+          o.frequency.setValueAtTime(p * 1.08, t);
+          o.frequency.exponentialRampToValueAtTime(p, t + 0.06);  // cada "hee" baja un pelín
+          var f1 = actx.createBiquadFilter(); f1.type = 'bandpass'; f1.frequency.value = 700;  f1.Q.value = 6;
+          var f2 = actx.createBiquadFilter(); f2.type = 'bandpass'; f2.frequency.value = 2700; f2.Q.value = 7;
+          var g = actx.createGain(); g.gain.value = 0;
+          o.connect(f1); o.connect(f2); f1.connect(g); f2.connect(g); g.connect(master);
+          var dur = 0.09 + Math.random() * 0.05;
+          g.gain.setValueAtTime(0, t);
+          g.gain.linearRampToValueAtTime(lvol, t + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+          o.start(t); o.stop(t + dur + 0.03);
+          t += dur + 0.04 + Math.random() * 0.035;               // huequito entre sílabas
+        }
+      }
+      (function nextGiggle() {
+        var gap = (lf.min || 14000) + Math.random() * ((lf.max || 38000) - (lf.min || 14000));
+        var to = setTimeout(function () { giggle(); nextGiggle(); }, gap);
+        audio.stops.push(function () { clearTimeout(to); });
+      })();
+    }
+
     // fundido de entrada (si no está silenciado por URL)
     master.gain.setTargetAtTime(state.m ? 0 : audio.level, actx.currentTime, 0.8);
 
